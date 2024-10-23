@@ -32,4 +32,11 @@ class WeatherData:
         with open(filename, 'w') as file:
             for measurement in self.measurements:
                 file.write(f"{measurement.location}, {measurement.datetime}, {measurement.value}\n")
-f.add_measurement(location, datetime, float(value))
+
+    def load_from_file(self, filename: str):
+
+        self.measurements = []  # Czyści istniejące pomiary przed wczytaniem
+        with open(filename, 'r') as file:
+            for line in file:
+                location, datetime, value = line.strip().split(', ')
+                self.add_measurement(location, datetime, float(value))
