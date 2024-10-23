@@ -27,3 +27,9 @@ class WeatherData:
         total_value = sum(measurement.value for measurement in location_measurements)
         return total_value / len(location_measurements)
 
+    def save_to_file(self, filename: str):
+
+        with open(filename, 'w') as file:
+            for measurement in self.measurements:
+                file.write(f"{measurement.location}, {measurement.datetime}, {measurement.value}\n")
+f.add_measurement(location, datetime, float(value))
