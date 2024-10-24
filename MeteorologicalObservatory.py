@@ -68,3 +68,8 @@ class TemperatureMatrix:
         for location, temperatures in self.matrix.items():
             result += f"Lokalizacja: {location}, Temperatury: {temperatures}\n"
         return result
+
+temperature_matrix = TemperatureMatrix()
+temperature_matrix.add_measurement("Warszawa", 15.5)
+temperature_matrix.add_measurement("Warszawa", 17.3)
+temperature_matrix.add_measurement("Kraków", 14.0)
