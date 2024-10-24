@@ -1,3 +1,4 @@
+import numpy as np
 class Measurement:
     def __init__(self, location , datetime,value):
         self.location = location
@@ -40,3 +41,30 @@ class WeatherData:
             for line in file:
                 location, datetime, value = line.strip().split(', ')
                 self.add_measurement(location, datetime, float(value))
+class TemperatureMatrix:
+    def __init__(self):
+        self.matrix = {}  # Słownik, gdzie klucze to lokalizacje, a wartości to wektory temperatur (NumPy)
+
+    def add_measurement(self, location: str, temperature: float):
+        if location in self.matrix:
+            self.matrix[location] = np.append(self.matrix[location], temperature)
+        else:
+            self.matrix[location] = np.array([temperature])
+
+    def get_temperatures(self, location: str):
+        return self.matrix.get(location, np.array([]))
+
+    def get_average_temperature(self, location: str):
+        temperatures = self.get_temperatures(location)
+        if temperatures.size == 0:
+            return None  # Brak danych dla podanej lokalizacji
+        return np.mean(temperatures)
+
+    def get_all_locations(self):
+        return list(self.matrix.keys())
+
+    def __str__(self):
+        result = ""
+        for location, temperatures in self.matrix.items():
+            result += f"Lokalizacja: {location}, Temperatury: {temperatures}\n"
+        return result
