@@ -46,24 +46,53 @@ class TemperatureMatrix:
         self.matrix = {}  # Słownik, gdzie klucze to lokalizacje, a wartości to wektory temperatur (NumPy)
 
     def add_measurement(self, location: str, temperature: float):
+
         if location in self.matrix:
             self.matrix[location] = np.append(self.matrix[location], temperature)
         else:
             self.matrix[location] = np.array([temperature])
 
+    def add_measurements(self, location: str, values: list):
+
+        if location in self.matrix:
+            self.matrix[location] = np.append(self.matrix[location], values)
+        else:
+            self.matrix[location] = np.array(values)
+
     def get_temperatures(self, location: str):
         return self.matrix.get(location, np.array([]))
 
     def get_average_temperature(self, location: str):
+
         temperatures = self.get_temperatures(location)
         if temperatures.size == 0:
             return None  # Brak danych dla podanej lokalizacji
         return np.mean(temperatures)
 
+    def get_average_per_day(self):
+
+        all_temperatures = []
+        for temperatures in self.matrix.values():
+            all_temperatures.extend(temperatures)  # Łączy wszystkie temperatury
+        if not all_temperatures:
+            return None  # Brak danych
+        return np.mean(all_temperatures)
+
+    def get_max_temperature(self):
+        max_temp = None
+        for temperatures in self.matrix.values():
+            if temperatures.size > 0:
+                current_max = np.max(temperatures)
+                if max_temp is None or current_max > max_temp:
+                    max_temp = current_max
+        return max_temp
+
     def get_all_locations(self):
+
         return list(self.matrix.keys())
 
     def __str__(self):
+
         result = ""
         for location, temperatures in self.matrix.items():
             result += f"Lokalizacja: {location}, Temperatury: {temperatures}\n"
