@@ -102,3 +102,29 @@ temperature_matrix = TemperatureMatrix()
 temperature_matrix.add_measurement("Warszawa", 15.5)
 temperature_matrix.add_measurement("Warszawa", 17.3)
 temperature_matrix.add_measurement("Kraków", 14.0)
+
+class WeatherApp:
+    def __init__(self):
+        self.weather_data = WeatherData()
+        self.temperature_matrix = TemperatureMatrix()
+
+    def run(self):
+        exit_program = False
+        while not exit_program:
+            print("Witaj w aplikacji pogodowej! Wybierz jedną z opcji:")
+            print("[1] Dodaj nowy pomiar.")
+            print("[2] Wyświetl pomiary dla wybranej lokalizacji.")
+            print("[3] Oblicz średnią temperaturę dla wybranej lokalizacji.")
+            print("[4] Zapisz dane do pliku.")
+            print("[5] Wczytaj dane z pliku.")
+            print("[6] Analiza danych w formie macierzy.")
+            print("[7] Wyjdź z programu.")
+            option = int(input("Wprowadź swój wybór: "))
+
+            if option == 1:
+                location = input("Podaj lokalizację: ")
+                datetime = input("Podaj datę i godzinę pomiaru (format: YYYY-MM-DD HH:MM): ")
+                value = float(input("Podaj wartość temperatury: "))
+                self.weather_data.add_measurement(location, datetime, value)
+                self.temperature_matrix.add_measurement(location, value)
+                print("Dodano nowy pomiar.\n")
