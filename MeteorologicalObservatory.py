@@ -36,7 +36,7 @@ class WeatherData:
 
     def load_from_file(self, filename: str):
 
-        self.measurements = []  # Czyści istniejące pomiary przed wczytaniem
+        self.measurements = []
         with open(filename, 'r') as file:
             for line in file:
                 location, datetime, value = line.strip().split(', ')
@@ -194,3 +194,4 @@ class WeatherApp:
 
 app = WeatherApp()
 app.run()
+.
