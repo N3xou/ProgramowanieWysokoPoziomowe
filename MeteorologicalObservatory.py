@@ -14,9 +14,7 @@ class WeatherData:
         return '\n'.join(str(measurement) for measurement in self.measurements)
 
     def add_measurement(self, location: str, datetime: str, value: float):
-        location = input('Lokalizacja: ')
-        # datetime ?
-        value = float(input('Temperatura: '))
+
         measurement = Measurement(location, datetime, value)
         self.measurements.append(measurement)
 
@@ -61,7 +59,6 @@ class TemperatureMatrix:
         return np.mean(temperatures)
 
     def get_average_per_day(self):
-
         all_temperatures = []
         for temperatures in self.matrix.values():
             all_temperatures.extend(temperatures)  # Łączy wszystkie temperatury
@@ -117,7 +114,7 @@ class WeatherApp:
                 datetime = input("Podaj datę i godzinę pomiaru (format: YYYY-MM-DD HH:MM): ")
                 value = float(input("Podaj wartość temperatury: "))
                 self.weather_data.add_measurement(location, datetime, value)
-                self.temperature_matrix.add_measurement(location, value)
+                self.temperature_matrix.add_measurements([location, datetime, value])
                 print("Dodano nowy pomiar.\n")
             elif option == 2:
                 location = input("Podaj lokalizację: ")
