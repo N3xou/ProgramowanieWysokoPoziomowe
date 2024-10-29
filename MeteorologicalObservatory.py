@@ -67,8 +67,7 @@ class WeatherData:
             except ValueError:
                 print(
                     "Nieprawidłowy format daty w jednym z pomiarów. Upewnij się, że jest w formacie 'YYYY-MM-DD HH:MM'.")
-        else:
-            print("Niepoprawny parametr sortowania. Użyj 'temperature' lub 'date'.")
+        print('Dane zostały posortowane.')
 class TemperatureMatrix:
     def __init__(self):
         self.matrix = {}  # Słownik, gdzie klucze to lokalizacje, a wartości to wektory temperatur (NumPy)
@@ -108,7 +107,6 @@ class TemperatureMatrix:
         return max_temp
 
     def get_all_locations(self):
-
         return list(self.matrix.keys())
 
     def __str__(self):
@@ -130,6 +128,12 @@ class WeatherApp:
 
     def run(self):
         exit_program = False
+        self.weather_data.add_measurement("Warszawa", "2024-10-20 12:00", 15.2)
+        self.weather_data.add_measurement("Kraków", "2024-10-21 14:00", 13.5)
+        self.weather_data.add_measurement("Gdańsk", "2024-10-22 09:30", 16.8)
+        self.temperature_matrix.add_measurements("Warszawa", [11,14,13.5,12,11])
+        self.temperature_matrix.add_measurements("Kraków", [13,16,14.2,13,9.2,8.2])
+        self.temperature_matrix.add_measurements('Gdańsk', [7.2,8.3,11.2])
         while not exit_program:
             print("Witaj w aplikacji pogodowej! Wybierz jedną z opcji:")
             print("[1] Dodaj nowy pomiar.")
@@ -234,8 +238,10 @@ class WeatherApp:
                     sub_option = int(input("Wybierz opcję: "))
                     if sub_option == 1:
                         self.weather_data.sort_measurements("temperature")
+                        exit_sub = True
                     elif sub_option == 2:
                         self.weather_data.sort_measurements("date")
+                        exit_sub = True
                     elif sub_option == 3:
                         exit_sub = True
                     else:
