@@ -14,6 +14,9 @@ class WeatherData:
         return '\n'.join(str(measurement) for measurement in self.measurements)
 
     def add_measurement(self, location: str, datetime: str, value: float):
+        location = input('Lokalizacja: ')
+        # datetime ?
+        value = float(input('Temperatura: '))
         measurement = Measurement(location, datetime, value)
         self.measurements.append(measurement)
 
@@ -49,12 +52,12 @@ class TemperatureMatrix:
         else:
             self.matrix[location] = np.array(values)
 
-    def get_average_temperature(self, location: str):
+    def get_mean_temperature(self, location: str):
 
         temperatures = self.matrix.get(location, np.array([]))
         if temperatures.size == 0:
             print('Brak danych dla lokalizacji')
-            return None  # Brak danych dla podanej lokalizacji
+            return None
         return np.mean(temperatures)
 
     def get_average_per_day(self):
@@ -87,9 +90,9 @@ class TemperatureMatrix:
         return result
 
 temperature_matrix = TemperatureMatrix()
-temperature_matrix.add_measurement("Warszawa", 15.5)
-temperature_matrix.add_measurement("Warszawa", 17.3)
-temperature_matrix.add_measurement("Kraków", 14.0)
+temperature_matrix.add_measurements("Warszawa", [15.5,13.1,17])
+temperature_matrix.add_measurements("Opole", [17.3,1.2,14])
+temperature_matrix.add_measurements("Kraków", [14.0,11,35])
 
 class WeatherApp:
     def __init__(self):
