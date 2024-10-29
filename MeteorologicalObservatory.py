@@ -70,36 +70,80 @@ class WeatherData:
         print('Dane zostały posortowane.')
 class TemperatureMatrix:
     def __init__(self):
-        self.matrix = {}  # Słownik, gdzie klucze to lokalizacje, a wartości to wektory temperatur (NumPy)
+        # Słowniki, gdzie klucze to lokalizacje, a wartości temp/wilgotnosc/cisnienie
+        self.temperature_matrix = {}
+        self.humidity_matrix = {}
+        self.pressure_matrix = {}
 
-    def add_measurements(self, location: str, values: list):
-        if location in self.matrix:
-            self.matrix[location] = np.append(self.matrix[location], values)
+    def add_measurements(self, location: str, temperatures: list, pressures: list = None, humidities: list = None):
+        if location in self.temperature_matrix:
+            self.temperature_matrix[location] = np.append(self.temperature_matrix[location], temperatures)
         else:
-            self.matrix[location] = np.array(values)
+            self.temperature_matrix[location] = np.array(temperatures)
+
+        if humidities is not None:
+            if location in self.humidity_matrix:
+                self.humidity_matrix[location] = np.append(self.humidity_matrix[location], humidities)
+            else:
+                self.humidity_matrix[location] = np.array(humidities)
+
+        if pressures is not None:
+            if location in self.pressure_matrix:
+                self.pressure_matrix[location] = np.append(self.pressure_matrix[location], pressures)
+            else:
+                self.pressure_matrix[location] = np.array(pressures)
 
     def get_mean_temperature(self, location: str):
 
-        temperatures = self.matrix.get(location, np.array([]))
+        temperatures = self.temperature_matrix.get(location, np.array([]))
         if temperatures.size == 0:
             print('Brak danych dla lokalizacji')
             return None
         return np.mean(temperatures)
 
+
     def get_average_per_day(self):
-        max_length = max(len(temps) for temps in self.matrix.values())
-        padded_temps = []
-        for temperatures in self.matrix.values():
+        # Calculate average for all parameters and display them
+        max_length = max(len(temps) for temps in self.temperature_matrix.values())
+
+        averages = {
+            "temperature": [],
+            "humidity": [],
+            "pressure": []
+        }
+
+        # Calculate padded averages for temperature
+        for temperatures in self.temperature_matrix.values():
             mean_value = np.mean(temperatures)
             padded = np.pad(temperatures, (0, max_length - len(temperatures)), constant_values=mean_value)
-            padded_temps.append(padded)
+            averages["temperature"].append(padded)
 
-        average_per_index = np.average(padded_temps, axis=0)
-        return average_per_index.tolist()
+        # Calculate padded averages for humidity
+        for humidities in self.humidity_matrix.values():
+            mean_value = np.mean(humidities) if humidities.size > 0 else 0
+            padded = np.pad(humidities, (0, max_length - len(humidities)), constant_values=mean_value)
+            averages["humidity"].append(padded)
+
+        # Calculate padded averages for pressure
+        for pressures in self.pressure_matrix.values():
+            mean_value = np.mean(pressures) if pressures.size > 0 else 0
+            padded = np.pad(pressures, (0, max_length - len(pressures)), constant_values=mean_value)
+            averages["pressure"].append(padded)
+
+        # Calculate final averages for each index
+        avg_temperature = np.average(averages["temperature"], axis=0)
+        avg_humidity = np.average(averages["humidity"], axis=0)
+        avg_pressure = np.average(averages["pressure"], axis=0)
+
+        return {
+            "average_temperature": avg_temperature.tolist(),
+            "average_humidity": avg_humidity.tolist(),
+            "average_pressure": avg_pressure.tolist()
+        }
 
     def get_max_temperature(self):
         max_temp = None
-        for temperatures in self.matrix.values():
+        for temperatures in self.temperature_matrix.values():
             if temperatures.size > 0:
                 current_max = np.max(temperatures)
                 if max_temp is None or current_max > max_temp:
@@ -107,19 +151,23 @@ class TemperatureMatrix:
         return max_temp
 
     def get_all_locations(self):
-        return list(self.matrix.keys())
+        return list(self.temperature_matrix.keys())
 
     def __str__(self):
-
-        result = ""
-        for location, temperatures in self.matrix.items():
+        result = "Temperature Matrix:\n"
+        for location, temperatures in self.temperature_matrix.items():
             result += f"Lokalizacja: {location}, Temperatury: {temperatures}\n"
+
+        result += "\nHumidity Matrix:\n"
+        for location, humidities in self.humidity_matrix.items():
+            result += f"Lokalizacja: {location}, Wilgotność: {humidities}\n"
+
+        result += "\nPressure Matrix:\n"
+        for location, pressures in self.pressure_matrix.items():
+            result += f"Lokalizacja: {location}, Ciśnienie: {pressures}\n"
+
         return result
 
-temperature_matrix = TemperatureMatrix()
-temperature_matrix.add_measurements("Warszawa", [15.5,13.1,17])
-temperature_matrix.add_measurements("Opole", [17.3,1.2,14])
-temperature_matrix.add_measurements("Kraków", [14.0,11,35])
 
 class WeatherApp:
     def __init__(self):
@@ -132,8 +180,9 @@ class WeatherApp:
         self.weather_data.add_measurement("Kraków", "2024-10-21 14:00", 13.5)
         self.weather_data.add_measurement("Gdańsk", "2024-10-22 09:30", 16.8)
         self.temperature_matrix.add_measurements("Warszawa", [11,14,13.5,12,11])
-        self.temperature_matrix.add_measurements("Kraków", [13,16,14.2,13,9.2,8.2])
-        self.temperature_matrix.add_measurements('Gdańsk', [7.2,8.3,11.2])
+        self.temperature_matrix.add_measurements("Kraków", [13,16,14.2,13,9.2,8.2], [1011,1014,1011, 1021,1014])
+        self.temperature_matrix.add_measurements('Gdańsk', [7.2,8.3,11.2], humidities=[11,15,16])
+        self.temperature_matrix.add_measurements('Gdańsk', [7.2, 8.3, 11.2],[1000,999,700],[12,14,16])
         while not exit_program:
             print("Witaj w aplikacji pogodowej! Wybierz jedną z opcji:")
             print("[1] Dodaj nowy pomiar.")
@@ -185,8 +234,8 @@ class WeatherApp:
                 exit_sub = False
                 while not exit_sub:
                     print("Opcje analizy danych:")
-                    print("[1] Dodaj wyniki dla wielu lokalizacji.")
-                    print("[2] Oblicz średnią temperaturę dla wszystkich lokalizacji.")
+                    print("[1] Dodaj wiele danych dla lokalizacji.")
+                    print("[2] Oblicz średnie wartości dla wszystkich lokalizacji.")
                     print("[3] Wyświetl maksymalną temperaturę.")
                     print("[4] Cofnij")
                     sub_option = int(input("Wybierz opcję: "))
@@ -194,27 +243,51 @@ class WeatherApp:
 
                     if sub_option == 1:
                         location = input("Podaj lokalizację: ")
-                        values = list(map(float, input("Podaj temperatury oddzielone spacją: ").split()))
-                        self.temperature_matrix.add_measurements(location, values)
+                        temperature = list(map(float, input("Podaj temperatury oddzielone spacją: ").split()))
+                        pressure = list(map(float, input("Podaj ciśnienie oddzielone spacją: ").split()))
+                        humidity = list(map(float, input("Podaj wilgotność oddzielone spacją: ").split()))
+                        self.temperature_matrix.add_measurements(location, temperature,pressure,humidity)
                         print("Dodano pomiary dla lokalizacji.\n")
+
 
 
                     elif sub_option == 2:
 
-                        avg_temp = self.temperature_matrix.get_average_per_day()
+                        # Get the average values for temperature, humidity, and pressure
 
-                        if avg_temp is not None:
+                        averages = self.temperature_matrix.get_average_per_day()  # Adjust method call
 
-                            print("Średnia temperatura dzienna (dla wszystkich lokalizacji):")
+                        if averages is not None:
 
-                            for i, temp in enumerate(avg_temp, 1):
+                            print("Średnie wartości dzienne (dla wszystkich lokalizacji):")
+
+                            # Display average temperature
+
+                            print("\nŚrednia temperatura:")
+
+                            for i, temp in enumerate(averages['average_temperature'], 1):
                                 print(f"Dzień {i}: {temp:.2f}°C")
+
+                            # Display average humidity
+
+                            print("\nŚrednia wilgotność:")
+
+                            for i, humidity in enumerate(averages['average_humidity'], 1):
+                                print(f"Dzień {i}: {humidity:.2f}%")
+
+                            # Display average pressure
+
+                            print("\nŚrednie ciśnienie:")
+
+                            for i, pressure in enumerate(averages['average_pressure'], 1):
+                                print(f"Dzień {i}: {pressure:.2f} hPa")
 
                             print()
 
                         else:
 
                             print("Brak danych do analizy.\n")
+
 
                     elif sub_option == 3:
                         max_temp = self.temperature_matrix.get_max_temperature()
