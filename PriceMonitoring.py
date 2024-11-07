@@ -50,5 +50,5 @@ class PriceMonitor:
                 self.products.append(product)
 
 
-z
+zb
 
