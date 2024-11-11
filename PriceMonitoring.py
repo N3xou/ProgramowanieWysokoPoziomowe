@@ -52,8 +52,15 @@ class PriceMonitor:
     def update_all_prices(self):
         for product in self.products:
             product.update_price()
+
     def get_cheapest_product(self):
-        pass
+        if not self.products:
+            print("Nie znaleziono żadnego produktu w bazie.")
+            return None
+
+        cheapest_product = min(self.products, key=lambda product: product.current_price)
+        print(f"The cheapest product is {cheapest_product.name} with a price of {cheapest_product.current_price} PLN")
+        return cheapest_product
     def save_prices(self, filename):
         with open('ceny.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
