@@ -28,7 +28,27 @@ class PriceMonitor:
         product.update_price()
         self.products.append(product)
     def remove_product(self, name):
-        pass
+        matching_products = [product for product in self.products if name.lower() in product.name.lower()]
+
+        if not matching_products:
+            print("Nie odnaleziono produktu.")
+            return
+
+        for i, product in enumerate(matching_products, start=1):
+            print(f"{i}. {product.name} - Cena: {product.current_price} PLN")
+
+        try:
+            choice = int(input("Wybierz numer produktu do usunięcia lub wprowadz 0 aby anyluwać.: "))
+            if choice == 0:
+                print("Operation cancelled.")
+                return
+            elif 1 <= choice <= len(matching_products):
+                self.products.remove(matching_products[choice - 1])
+                print(f"{matching_products[choice - 1].name} has been removed.")
+            else:
+                print("Invalid selection.")
+        except ValueError:
+            print("Invalid input. Operation cancelled.")
     def update_all_prices(self):
         for product in self.products:
             product.update_price()
