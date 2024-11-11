@@ -77,5 +77,47 @@ class PriceMonitor:
                 self.products.append(product)
 
 
-zb
+def main():
+    monitor = PriceMonitor()
+    print("Witaj w systemie monitorowania cen!")
 
+    while True:
+        print("\n1. Dodaj produkt do monitorowania")
+        print("2. Usuń produkt")
+        print("3. Zaktualizuj ceny produktów")
+        print("4. Wyświetl listę produktów i ich ceny")
+        print("5. Znajdź najtańszy produkt")
+        print("6. Zapisz ceny do pliku")
+        print("7. Wczytaj ceny z pliku")
+        print("8. Wyjdź")
+
+        choice = input("Wybierz opcję: ")
+
+        if choice == "1":
+            name = input("Podaj nazwę produktu: ")
+            url = input("Podaj URL produktu: ")
+            monitor.add_product(name, url)
+        elif choice == "2":
+            name = input("Podaj nazwę produktu do usunięcia: ")
+            monitor.remove_product(name)
+        elif choice == "3":
+            monitor.update_all_prices()
+        elif choice == "4":
+            monitor.display_products()
+        elif choice == "5":
+            monitor.get_cheapest_product()
+        elif choice == "6":
+            filename = input("Podaj nazwę pliku do zapisania cen (np. ceny.csv): ")
+            monitor.save_prices(filename)
+        elif choice == "7":
+            filename = input("Podaj nazwę pliku do wczytania cen (np. ceny.csv): ")
+            monitor.load_prices(filename)
+        elif choice == "8":
+            print("Zamykanie programu.")
+            break
+        else:
+            print("Nieprawidłowy wybór. Spróbuj ponownie.")
+
+
+if __name__ == "__main__":
+    main()
