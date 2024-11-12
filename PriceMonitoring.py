@@ -4,6 +4,8 @@ import csv
 import re
 import time
 import threading
+import datetime
+import matplotlib.pyplot as plt
 class Product:
     def __init__(self, name, url='', current_price = 0.0):
         self.name = name
@@ -125,6 +127,9 @@ class PriceMonitor:
         update_thread  = threading.Thread(target=update_task, daemon=True)
         update_thread.start()
 
+    import csv
+    import datetime
+
     def append_prices_to_csv(self, filename):
         # Load existing data from CSV file if it exists
         existing_data = {}
@@ -132,28 +137,67 @@ class PriceMonitor:
             with open(filename, 'r', newline='') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
-                    name, price_list, url = row[0], row[1], row[2]
-                    existing_data[name] = (eval(price_list), url)  # Store as (price_list, url)
+                    name, prices, timestamps, url = row[0], eval(row[1]), eval(row[2]), row[3]
+                    existing_data[name] = (prices, timestamps, url)
         except FileNotFoundError:
-            # File doesn't exist yet, so existing_data stays empty
             pass
 
+        # Update prices for monitored products and add a new timestamp
         for product in self.products:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             if product.name in existing_data:
-                price_list, url = existing_data[product.name]
-                price_list.append(product.current_price)
-                existing_data[product.name] = (price_list, product.url)
+                prices, timestamps, url = existing_data[product.name]
+                prices.append(product.current_price)
+                timestamps.append(timestamp)
+                existing_data[product.name] = (prices, timestamps, product.url)
             else:
-                # Add new product entry to existing_data
-                existing_data[product.name] = ([product.current_price], product.url)
+                existing_data[product.name] = ([product.current_price], [timestamp], product.url)
 
-        # Write updated data back to the CSV file with the new structure
+        # Write data back to CSV
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            for name, (price_list, url) in existing_data.items():
-                writer.writerow([name, price_list, url])
+            for name, (prices, timestamps, url) in existing_data.items():
+                writer.writerow([name, prices, timestamps, url])
 
-        print(f"Ceny zostaly zaktualizowane w pliku: {filename}")
+        print(f"Ceny zostały zaktualizowane w pliku: {filename}")
+
+    def plot_price_trends(self, filename, combine = False):
+        # Load data from CSV file
+        products_data = {}
+        with open(filename, 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                name, prices, timestamps, url = row[0], eval(row[1]), eval(row[2]), row[3]
+                products_data[name] = (prices, timestamps)
+
+        # Plot each product's price trend
+        if not combine:
+            for name, (prices, timestamps) in products_data.items():
+                plt.figure(figsize=(10, 5))
+                plt.plot(timestamps, prices, marker='o', linestyle='-')
+                plt.title(f'Ceny dla {name}')
+                plt.xlabel('Data')
+                plt.ylabel('Cena w PLN')
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                plt.show()
+        else:
+            plt.figure(figsize=(12, 6))
+            plt.title('Price Trends for All Monitored Products')
+            plt.xlabel('Timestamp')
+            plt.ylabel('Price (PLN)')
+
+            # Plot each product's price trend in a different color
+            for name, (prices, timestamps) in products_data.items():
+                plt.plot(timestamps, prices, marker='o', linestyle='-', label=name)
+
+            # Rotate timestamps for better readability
+            plt.xticks(rotation=45)
+            plt.legend(title="Products")  # Add a legend with product names
+            plt.tight_layout()
+            plt.show()
+
+
 def main():
     #monitor = PriceMonitor()
     product1 = Product("A Light in the Attic",
@@ -166,7 +210,7 @@ def main():
     # Update prices for the initialized products
 
     monitor.update_all_prices()
-    monitor.automatic_price_update(filename='ceny2.csv',interval=10)
+    monitor.automatic_price_update(filename='ceny2.csv',interval=60)
     print("Witaj w systemie monitorowania cen!")
 
     while True:
@@ -178,6 +222,7 @@ def main():
         print("6. Wczytaj ceny z pliku")
         print("7. Wyjdź")
         print("8. Wyświetl wszystkie produkty")
+        print("9. Wyświetl wykres cen.")
 
         choice = input("Wybierz opcję: ")
 
@@ -203,6 +248,14 @@ def main():
             break
         elif choice == "8":
             monitor.display_all_products()
+        elif choice == "9":
+            filename = input("Podaj nazwe pliku csv z ktorego chcesz stworzyc wykres cenowy. ")
+            comb = input("Czy wyswietlic wykres kazdego produktu osobno?\n[1]Tak \n[2]Nie ")
+            if comb == 1:
+                combbool = False
+            else:
+                combbool = True
+            monitor.plot_price_trends(filename = filename, combine = combbool)
         else:
             print("Nieprawidłowy wybór. Spróbuj ponownie.")
 
