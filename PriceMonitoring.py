@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 import re
 class Product:
-    def __init__(self, name, url, current_price = 0.0):
+    def __init__(self, name, url='', current_price = 0.0):
         self.name = name
         self.url = url
         self.current_price = current_price
@@ -105,7 +105,7 @@ class PriceMonitor:
                 name, price = row
                 print(name)
                 print(price)
-                product = Product(name, float(price))
+                product = Product(name, current_price =  price)
                 self.products.append(product)
 
     def display_all_products(self):
