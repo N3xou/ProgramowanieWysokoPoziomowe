@@ -120,9 +120,9 @@ class PriceMonitor:
         def update_task():
             while True:
                 self.update_all_prices()
-                self.append_prices_to_csv()
+                self.append_prices_to_csv(filename)
                 time.sleep(interval)
-        update_thread  = threading.Thread(target=update_task(), daemon=True)
+        update_thread  = threading.Thread(target=update_task, daemon=True)
         update_thread.start()
 
     def append_prices_to_csv(self, filename):
@@ -138,14 +138,13 @@ class PriceMonitor:
             # File doesn't exist yet, so existing_data stays empty
             pass
 
-        # Update prices for each product
         for product in self.products:
             if product.name in existing_data:
                 price_list, url = existing_data[product.name]
                 price_list.append(product.current_price)
                 existing_data[product.name] = (price_list, product.url)
             else:
-                # Create a new entry if product is not already in the CSV
+                # Add new product entry to existing_data
                 existing_data[product.name] = ([product.current_price], product.url)
 
         # Write updated data back to the CSV file with the new structure
@@ -167,7 +166,7 @@ def main():
     # Update prices for the initialized products
 
     monitor.update_all_prices()
-    monitor.update_all_prices()
+    monitor.automatic_price_update(filename='ceny2.csv',interval=10)
     print("Witaj w systemie monitorowania cen!")
 
     while True:
