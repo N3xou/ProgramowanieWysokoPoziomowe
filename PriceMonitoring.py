@@ -93,21 +93,20 @@ class PriceMonitor:
         cheapest_product = min(self.products, key=lambda product: product.current_price)
         print(f"Najtańszy produkt to {cheapest_product.name} kosztujący {cheapest_product.current_price} PLN")
         return cheapest_product
+
     def save_prices(self, filename):
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for product in self.products:
-                writer.writerow([product.name, product.current_price])
+                writer.writerow([product.name, product.current_price, product.url])
 
     def load_prices(self, filename):
         with open(filename, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile)
-            #self.products = []   # clearing products
+            self.products = []  # Clear any existing products
             for row in reader:
-                name, price = row
-                print(name)
-                print(price)
-                product = Product(name, current_price =  price)
+                name, price, url = row  # Expect each row to have name, price, and url
+                product = Product(name=name, url=url, current_price=float(price))
                 self.products.append(product)
 
     def display_all_products(self):
@@ -127,14 +126,14 @@ class PriceMonitor:
         update_thread.start()
 
     def append_prices_to_csv(self, filename):
-        # Load existing prices from CSV file if it exists
+        # Load existing data from CSV file if it exists
         existing_data = {}
         try:
             with open(filename, 'r', newline='') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
-                    name, price_list = row[0], row[1]
-                    existing_data[name] = eval(price_list)  # Convert the price list string back to a list
+                    name, price_list, url = row[0], row[1], row[2]
+                    existing_data[name] = (eval(price_list), url)  # Store as (price_list, url)
         except FileNotFoundError:
             # File doesn't exist yet, so existing_data stays empty
             pass
@@ -142,29 +141,33 @@ class PriceMonitor:
         # Update prices for each product
         for product in self.products:
             if product.name in existing_data:
-                existing_data[product.name].append(product.current_price)
+                price_list, url = existing_data[product.name]
+                price_list.append(product.current_price)
+                existing_data[product.name] = (price_list, product.url)
             else:
-                existing_data[product.name] = [product.current_price]
+                # Create a new entry if product is not already in the CSV
+                existing_data[product.name] = ([product.current_price], product.url)
 
-        # Write updated data back to the CSV file
+        # Write updated data back to the CSV file with the new structure
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            for name, price_list in existing_data.items():
-                writer.writerow([name, price_list])
+            for name, (price_list, url) in existing_data.items():
+                writer.writerow([name, price_list, url])
 
-        print(f"Prices have been updated and saved to {filename}")
+        print(f"Ceny zostaly zaktualizowane w pliku: {filename}")
 def main():
-    monitor = PriceMonitor()
-    #product1 = Product("A Light in the Attic",
-     #                  "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
-    #product2 = Product("Tipping the Velvet", "http://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html")
-    #product3 = Product("Soumission", "http://books.toscrape.com/catalogue/soumission_998/index.html")
+    #monitor = PriceMonitor()
+    product1 = Product("A Light in the Attic",
+                      "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+    product2 = Product("Tipping the Velvet", "http://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html")
+    product3 = Product("Soumission", "http://books.toscrape.com/catalogue/soumission_998/index.html")
 
-    #monitor = PriceMonitor(products=[product1, product2, product3])
+    monitor = PriceMonitor(products=[product1, product2, product3])
 
     # Update prices for the initialized products
-    monitor.update_all_prices()
 
+    monitor.update_all_prices()
+    monitor.update_all_prices()
     print("Witaj w systemie monitorowania cen!")
 
     while True:
