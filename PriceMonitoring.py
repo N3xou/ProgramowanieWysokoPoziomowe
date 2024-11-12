@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import re
+import time
+import threading
 class Product:
     def __init__(self, name, url='', current_price = 0.0):
         self.name = name
@@ -115,7 +117,42 @@ class PriceMonitor:
             print("Lista produktów i ich cen:")
             for product in self.products:
                 print(f"Produkt: {product.name}, Cena: {product.current_price}")
+    def automatic_price_update(self, filename, interval=60):
+        def update_task():
+            while True:
+                self.update_all_prices()
+                self.append_prices_to_csv()
+                time.sleep(interval)
+        update_thread  = threading.Thread(target=update_task(), daemon=True)
+        update_thread.start()
 
+    def append_prices_to_csv(self, filename):
+        # Load existing prices from CSV file if it exists
+        existing_data = {}
+        try:
+            with open(filename, 'r', newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    name, price_list = row[0], row[1]
+                    existing_data[name] = eval(price_list)  # Convert the price list string back to a list
+        except FileNotFoundError:
+            # File doesn't exist yet, so existing_data stays empty
+            pass
+
+        # Update prices for each product
+        for product in self.products:
+            if product.name in existing_data:
+                existing_data[product.name].append(product.current_price)
+            else:
+                existing_data[product.name] = [product.current_price]
+
+        # Write updated data back to the CSV file
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for name, price_list in existing_data.items():
+                writer.writerow([name, price_list])
+
+        print(f"Prices have been updated and saved to {filename}")
 def main():
     monitor = PriceMonitor()
     #product1 = Product("A Light in the Attic",
