@@ -34,6 +34,14 @@ class MovieRecommender:
         self.user_movie_matrix = self.ratings.pivot(index='userId', columns='movieId', values='rating').fillna(0)
         self.similarity_matrix = None
 
+    def calculate_similarity(self):
+        """
+        Oblicza podobieństwo między użytkownikami za pomocą cosine similarity.
+        """
+        self.similarity_matrix = cosine_similarity(self.user_movie_matrix)
+        return self.similarity_matrix
+
+
 class UserInterface:
     def __init__(self):
         pass
