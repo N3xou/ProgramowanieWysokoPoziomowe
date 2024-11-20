@@ -1,22 +1,38 @@
 import numpy as np
-class MovieRecommender:
-    def __init__(self):
-        try:
-            with open('movies.dat', 'r') as file:
-                self.movies = file.read()
-        except FileNotFoundError:
-            print('movies.dat file not found')
-        try:
-            with open('ratings.dat', 'r') as file:
-                self.ratings = file.read()
-        except FileNotFoundError:
-            print('ratings.dat file not found')
 
-    def calculate_similiarity(self):
-        pass
-        #Program umożliwia obliczenie macierzy podobieństwa użytkowników przy użyciu cosine similarity
-    def reccomend_movies(self):
-        pass
+
+class MovieRecommender:
+    def __init__(self, ratings_file='ratings.dat', movies_file='movies.dat'):
+        # Wczytanie danych z plików
+        self.ratings_file = ratings_file
+        self.movies_file = movies_file
+
+        # Wczytaj dane wejściowe
+        try:
+            self.ratings = pd.read_csv(
+                self.ratings_file,
+                sep="::",
+                names=["userId", "movieId", "rating", "timestamp"],
+                encoding="ISO-8859-1",
+                engine='python'
+            ).drop(columns=["timestamp"])
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File {ratings_file} not found.")
+
+        try:
+            self.movies = pd.read_csv(
+                self.movies_file,
+                sep="::",
+                names=["movieId", "title", "genres"],
+                encoding="ISO-8859-1",
+                engine='python'
+            ).drop(columns=["genres"])
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File {movies_file} not found.")
+
+        # Utwórz macierz użytkownik-film
+        self.user_movie_matrix = self.ratings.pivot(index='userId', columns='movieId', values='rating').fillna(0)
+        self.similarity_matrix = None
 
 class UserInterface:
     def __init__(self):
