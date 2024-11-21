@@ -61,9 +61,15 @@ class MovieRecommender:
                         recommendations[movie_id] += rating
 
             # Posortuj rekomendacje po najwyższej ocenie
-        recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n] # sorting by score
-        return [(self.movies[self.movies['movieId'] == movie_id]['title'].values[0]) for movie_id in
-                recommended_movies]
+        recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        movie_titles = []
+        for movie_id, _ in recommended_movies:
+            # Ensure the movie_id exists in self.movies before attempting access
+            movie_row = self.movies[self.movies['movieId'] == movie_id]
+            if not movie_row.empty:
+                movie_titles.append(movie_row['title'].values[0])
+        # sorting by score
+        return movie_titles
 
 
 class UserInterface:
@@ -91,7 +97,7 @@ class UserInterface:
                     for movie, score in recommendations:
                         print(f"{movie} - {score:.2f}")
                 except ValueError:
-                    print("Nieprawidłowe ID użytkownika. Spróbuj ponownie.")
+                    print("Nieprawidłowe ID użytkownika. Spróbuj ponownie. [Podobieństwa muszą zostać najpierw obliczone.]")
                 except Exception as e:
                     print(f"Wystąpił błąd: {e}")
             elif choice == "3":
@@ -101,7 +107,8 @@ class UserInterface:
                 print("Nieprawidłowa opcja. Spróbuj ponownie.")
 
 if __name__ == "__main__":
-    ui = UserInterface(MovieRecommender())
+    mv = MovieRecommender()
+    ui = UserInterface(mv)
     ui.run()
 
 
