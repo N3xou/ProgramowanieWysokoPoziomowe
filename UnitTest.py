@@ -14,7 +14,8 @@ class TestMovieRecommender(unittest.TestCase):
     def test_recommend_movies(self):
         recommendations = self.recommender.recommend_movies(1, top_n=3)
         self.assertEqual(len(recommendations), 3)
-        self.assertTrue(all(isinstance(movie, str) for movie, _ in recommendations))
+        self.assertTrue(all(isinstance(movie, str) for movie in recommendations))
+
 
 if __name__ == "__main__":
     unittest.main()
