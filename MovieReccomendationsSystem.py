@@ -53,7 +53,7 @@ class MovieRecommender:
         for idx in similar_users_indices[1:]:
             user_ratings = self.user_movie_matrix.iloc[idx]
             for movie_id, rating in user_ratings.items():
-                if self.user_movie_matrix.at[user_index + 1, movie_id] == 0 and rating > 0:
+                if self.user_movie_matrix.at[user_index + 1, movie_id] == 0 and rating > 0: #  reccomends unwatched by user movies
 
                     if movie_id not in recommendations:
                         recommendations[movie_id] = rating
@@ -61,8 +61,8 @@ class MovieRecommender:
                         recommendations[movie_id] += rating
 
             # Posortuj rekomendacje po najwyższej ocenie
-        recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n]
-        return [(self.movies[self.movies['movieId'] == movie_id]['title'].values[0], score) for movie_id, score in
+        recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n] # sorting by score
+        return [(self.movies[self.movies['movieId'] == movie_id]['title'].values[0]) for movie_id in
                 recommended_movies]
 
 
