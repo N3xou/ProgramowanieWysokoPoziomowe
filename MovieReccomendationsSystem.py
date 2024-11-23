@@ -3,8 +3,25 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 class MovieRecommender:
+    """
+       System rekomendacji filmów oparty na filtracji opartej na współpracy użytkowników.
+
+       Attributes:
+           ratings_file (str): Ścieżka do pliku z ocenami użytkowników.
+           movies_file (str): Ścieżka do pliku z informacjami o filmach.
+           ratings (pd.DataFrame): Dane o ocenach użytkowników.
+           movies (pd.DataFrame): Dane o filmach.
+           user_movie_matrix (pd.DataFrame): Macierz użytkownik-film.
+           similarity_matrix (np.ndarray): Macierz podobieństwa użytkowników.
+       """
     def __init__(self, ratings_file='ratings.dat', movies_file='movies.dat'):
-        # Wczytanie danych z plików
+        """
+               Inicjalizuje system rekomendacji, wczytuje dane i tworzy macierz użytkownik-film.
+
+               Args:
+                   ratings_file (str): Ścieżka do pliku z ocenami użytkowników. Domyślnie 'ratings.dat'.
+                   movies_file (str): Ścieżka do pliku z informacjami o filmach. Domyślnie 'movies.dat'.
+               """
         self.ratings_file = ratings_file
         self.movies_file = movies_file
 
@@ -36,11 +53,28 @@ class MovieRecommender:
         self.similarity_matrix = None
 
     def calculate_similarity(self):
+        """
+                Oblicza macierz podobieństwa użytkowników za pomocą podobieństwa cosinusowego.
+
+                Returns:
+                    np.ndarray: Macierz podobieństwa użytkowników.
+                """
         self.similarity_matrix = cosine_similarity(self.user_movie_matrix)
         return self.similarity_matrix
 
     def recommend_movies(self, user_id, top_n=5, sort_by = 'score', genre = None):
-        """Recommend movies for a given user based on collaborative filtering."""
+        """
+        Rekomenduje filmy dla podanego użytkownika na podstawie ocen podobnych użytkowników.
+
+        Args:
+            user_id (int): ID użytkownika, dla którego generowane są rekomendacje.
+            top_n (int): Liczba rekomendowanych filmów. Domyślnie 5.
+            genre (str): Gatunki do filtrowania wyników (np. 'Comedy Drama').
+            sort_by(str): Sposób sortowania (title,genre,score). Domyślnie score
+
+        Returns:
+            list: Lista rekomendowanych filmów w formacie (tytuł, gatunki, trafność).
+        """
         if user_id not in self.user_movie_matrix.index:
             raise ValueError("User ID not found")
         if self.similarity_matrix is None:
@@ -58,25 +92,29 @@ class MovieRecommender:
 
             # Pobierz oceny podobnych użytkowników
         for idx in similar_users_indices[1:]:
-            similiar_user_ratings = self.user_movie_matrix.iloc[idx]
-            for movie_id, rating in similiar_user_ratings.items():
-                if self.user_movie_matrix.at[user_index + 1, movie_id] == 0 and rating > 0: #  reccomends unwatched by user movies
+            similar_user_ratings = self.user_movie_matrix.iloc[idx]
+            for movie_id, rating in similar_user_ratings.items():
+                if self.user_movie_matrix.at[user_id, movie_id] == 0 and rating > 0: #  reccomends unwatched by user movies
                     if movie_id not in recommendations:
                         recommendations[movie_id] = rating
                     else:
                         recommendations[movie_id] += rating
 
             # Posortuj rekomendacje po najwyższej ocenie
-        recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        #recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_n]
         movie_titles = []
-        for movie_id, score in recommended_movies:
+        genre_filters = genre.lower().split() if genre else []  # Split input into a list of genres
+        for movie_id, score in recommendations.items():
             # Ensure the movie_id exists in self.movies before attempting access
             movie_row = self.movies[self.movies['movieId'] == movie_id]
             if not movie_row.empty:
                 title = movie_row['title'].values[0]
-                genres = movie_row['genres'].values[0]
-                if genre is None or genre.lower() in genres.lower():
+                genres = movie_row['genres'].values[0].lower()
+
+                # Check if all genres in genre_filters are in the movie's genres
+                if all(genre in genres for genre in genre_filters):
                     movie_titles.append((title, genres, score))
+
         if sort_by == 'title':
             movie_titles.sort(key=lambda x: x[0])
         elif sort_by == 'genre':
@@ -84,10 +122,15 @@ class MovieRecommender:
         elif sort_by == 'score':
             movie_titles.sort(key=lambda x: x[2], reverse=True)
         # sorting by score
-        return movie_titles
+        return movie_titles[:top_n]
 
     def get_all_genres(self):
-        """Retrieve a sorted list of all unique genres."""
+        """Funkcja która zwraca zbiór dostępnych gatunków filmowych.
+        Returns:
+            set: Zbiór dostępnych gatunków
+
+        """
+        # w set dane nie moga sie powtarzac, w liscie moga
         genres = set()
         for genre_list in self.movies['genres']:
             genres.update(genre_list.split('|'))
@@ -95,10 +138,22 @@ class MovieRecommender:
 
 
 class UserInterface:
+    """
+    Interfejs użytkownika do obsługi systemu rekomendacji filmów.
+    """
     def __init__(self, movie_recommender):
+        """
+        Inicjalizuje interfejs użytkownika.
+
+        Args:
+            movie_recommender (MovieRecommender): Instancja systemu rekomendacji.
+        """
         self.movie_recommender = movie_recommender
 
     def run(self):
+        """
+        Uruchamia interfejs użytkownika, umożliwiając interakcję z systemem rekomendacji.
+        """
         while True:
             print("\nOpcje:")
             print("1. Oblicz podobieństwo między użytkownikami")
@@ -116,7 +171,10 @@ class UserInterface:
                 try:
                     user_id = int(input("Podaj ID użytkownika: "))
                     genre_filter = input("Podaj gatunek (naciśnij Enter aby pominąć): ")
-                    sort_by = input("Sortuj wyniki według (title, genre, score.[Domyślnie score:trafność]): ").strip().lower()
+                    sort_by = input("Sortuj wyniki według (title, genre, score.) [Domyślnie score:trafność]: ").strip().lower()
+                    amt_recommendations = int(input("Ile wyników chcesz wyświetlić?:  "))
+                    if amt_recommendations <= 0:
+                        amt_recommendations = 1
                     if sort_by not in ['title', 'genre', 'score']:
                         sort_by = 'score'
 
@@ -124,10 +182,11 @@ class UserInterface:
                     recommendations = self.movie_recommender.recommend_movies(
                         user_id=user_id,
                         genre=genre_filter if genre_filter else None,
-                        sort_by=sort_by
+                        sort_by=sort_by,
+                        top_n = amt_recommendations
                     )
                     for title, genre, score in recommendations:
-                        print(f"{title} | Gatunek: {genre} | Ocena: {score:.2f}")
+                        print(f"{title} | Gatunek: {genre} | Trafność: {score:.2f}")
                 except ValueError:
                     print("Błąd: Wprowadź poprawne dane.")
                 except Exception as e:
