@@ -91,7 +91,7 @@ class MovieRecommender:
         recommendations = {}
 
             # Pobierz oceny podobnych użytkowników
-        for idx in similar_users_indices[1:]:
+        for idx in similar_users_indices[1:100]:
             similar_user_ratings = self.user_movie_matrix.iloc[idx]
             for movie_id, rating in similar_user_ratings.items():
                 if self.user_movie_matrix.at[user_id, movie_id] == 0 and rating > 0: #  reccomends unwatched by user movies
